@@ -1,6 +1,7 @@
 import rospy
 from sensor_msgs.msg import PointCloud2
 from CMU_VoxelNet_ROS.msg import predictions
+from preprocess import Pre_Process
 
 class VoxelNet_Node:
     def __init__(self):
@@ -9,9 +10,10 @@ class VoxelNet_Node:
         self.pub_predictions = rospy.Publisher(
             '/voxelnet_predictions', predictions, queue_size=1)
 
+        self.pre_process = Pre_Process()
+
     def aggregated_callback(self, data):
-        # TODO Implement VoxelNet
-        rospy.loginfo('unimplemented')
+        input = self.pre_process.pre_process(data.data)
 
 
 if __name__ == '__main__':

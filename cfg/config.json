@@ -1,0 +1,24 @@
+{
+    "class_list": [
+        "trunk"
+    ],
+    "max_pts_per_voxel": 35,
+    "voxel_size": {
+        "D": 4.0,
+        "H": 0.21875,
+        "W": 0.21875
+    },
+    "pcl_range": {
+        "X1": -17.5,
+        "X2": 17.5,
+        "Y1": -17.5,
+        "Y2": 17.5,
+        "Z1": 0,
+        "Z2": 4
+    },
+    "IOU_pos_threshold": 0.6,
+    "IOU_neg_threshold": 0.45,
+    "anchors_per_position": 2,
+    "nms_threshold": 0.001,
+    "nms_score_threshold": 0.96
+}
