@@ -1,9 +1,5 @@
-from __future__ import division
-import os
 import json
 import math
-import errno
-import time
 
 import numpy as np
 
@@ -90,7 +86,7 @@ def filter_pointcloud(lidar):
         lidar (arr): the point cloud
 
     Returns:
-        arr: cropped point cloud
+        arr: cropped point cloud, same shape as input
     '''
     config = load_config()
 

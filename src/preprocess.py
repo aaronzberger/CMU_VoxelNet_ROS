@@ -1,13 +1,7 @@
-from __future__ import division
-import os.path
-
 import numpy as np
-
-from utils import load_config, get_num_voxels, get_anchors
-from utils import filter_pointcloud
-
 from ros_numpy.point_cloud2 import pointcloud2_to_xyz_array
 
+from utils import load_config, get_num_voxels, get_anchors, filter_pointcloud
 
 
 class Pre_Process:
@@ -79,6 +73,25 @@ class Pre_Process:
         return np.array(voxel_features), voxel_coords
 
     def pre_process(self, pointcloud_msg):
+        '''
+        Convert a received PointCloud2 message into input format for VoxelNet
+
+        Parameters:
+            pointcloud_msg (sensor_msgs/PointCloud2): the source point cloud
+
+        Returns:
+            voxel_features (arr): (N, X, 7),
+                where N = number of non-empty voxels,
+                X = max points per voxel (See T in 2.1.1), and
+                7 encodes [x,y,z,reflectance,Δx,Δy,Δz],
+                    where Δ is from the mean of all points in the voxel
+
+            voxel_coords (arr): (N, 3),
+                where N = number of non-empty voxels and
+                3 encodes [Z voxel, Y voxel, X voxel]
+
+            pointcloud (arr): (Z, 4), pointcloud
+        '''
         pointcloud = pointcloud2_to_xyz_array(pointcloud_msg)
 
         # Pad with reflectances as 1

@@ -1,17 +1,17 @@
-from __future__ import division
-
+from geometry_msgs.msg import Pose, Point, Vector3
 import numpy as np
-
-from utils import load_config, get_anchors
-
+import rospy
+from std_msgs.msg import Header
 import torch
+from vision_msgs.msg import BoundingBox3D
+
+from CMU_VoxelNet_ROS.msg import predictions
 from nms import nms
+from ros_numpy.point_cloud2 import array_to_pointcloud2
+from utils import load_config, get_anchors
 
 
 class Post_Process:
-    def __init__(self):
-        self.config = load_config()
-
     def delta_to_boxes3d(self, deltas, anchors):
         '''
         Convert regression map deltas to bounding boxes
@@ -21,7 +21,7 @@ class Post_Process:
                 where N = batch size
             anchors (arr): (X, 7): the anchors, where X = number of anchors
 
-        ReturnsL
+        Returns:
             arr: the bounding boxes
         '''
         batch_size = deltas.shape[0]
@@ -78,8 +78,7 @@ class Post_Process:
         Parameters:
             boxes_center (arr): (X, 7):
                 boxes in center notation [xyzhwlr]
-            z_middle (bool): whether the z in boxes_center is at the middle of
-                the object (it's normally at the bottom for KITTI labels)
+            z_middle (bool): whether the z in boxes_center is at the middle of the object
 
         Returns:
             arr: bounding box in corner notation
@@ -156,7 +155,6 @@ class Post_Process:
 
         return standup_boxes2d
 
-
     def output_to_boxes(self, prob_score_map, reg_map):
         '''
         Convert VoxelNet output to bounding boxes for visualization
@@ -167,8 +165,6 @@ class Post_Process:
 
         Returns:
             arr: boxes in center notation
-            arr: boxes in corner notation
-            arr: scores for the boxes
         '''
         config = load_config()
         batch_size, _, _, _ = prob_score_map.shape
@@ -219,3 +215,32 @@ class Post_Process:
             return_score.append(tmp_scores)
 
         return np.array(return_box3d)
+
+    def boxes_to_ros_msg(self, boxes, pointcloud):
+        '''
+        Convert center notation 3D bounding boxes to ROS message format
+
+        Parameters:
+            boxes (arr): (N, 7), where each row is a bounding box in the format [x, y, z, h, w, l, r]
+            pointcloud (arr): (X, 4): pointcloud
+
+        Returns:
+            predictions_msg (CMU_VoxelNet_ROS/predictions.msg): the ROS message to publish
+        '''
+        ros_bboxes = []
+
+        for bbox in boxes:
+            ros_bboxes.append(BoundingBox3D(
+                center=Pose(position=Point(x=bbox[0], y=bbox[1], z=bbox[2])),
+                size=Vector3(x=bbox[3], y=bbox[4], z=bbox[5])))
+
+        predictions_msg = predictions()
+        predictions_msg.header = Header(stamp=rospy.Time.now(), frame_id='camera_init')
+        predictions_msg.bboxes = ros_bboxes
+        
+        # Do not include a stamp or frame_id, since this message will be published
+        # within another message containing a std_msgs/Header
+        predictions_msg.source_cloud = array_to_pointcloud2(pointcloud)
+
+        return predictions_msg
+
