@@ -1,4 +1,4 @@
-Header Header
+Header header
 
 vision_msgs/BoundingBox3D[] bboxes
 sensor_msgs/PointCloud2 source_cloud
