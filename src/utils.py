@@ -78,36 +78,6 @@ def get_anchors():
     return np.stack([cx, cy, cz, height, width, length, rotation], axis=-1)
 
 
-def filter_pointcloud(lidar):
-    '''
-    Crop a lidar pointcloud to the dimensions specified in config json
-
-    Parameters:
-        lidar (arr): the point cloud
-
-    Returns:
-        arr: cropped point cloud, same shape as input
-    '''
-    config = load_config()
-
-    x_pts = lidar[:, 0]
-    y_pts = lidar[:, 1]
-    z_pts = lidar[:, 2]
-
-    # Determine indexes of valid, in-bound points
-    lidar_x = np.where((x_pts >= config['pcl_range']['X1'])
-                       & (x_pts < config['pcl_range']['X2']))[0]
-    lidar_y = np.where((y_pts >= config['pcl_range']['Y1'])
-                       & (y_pts < config['pcl_range']['Y2']))[0]
-    lidar_z = np.where((z_pts >= config['pcl_range']['Z1'])
-                       & (z_pts < config['pcl_range']['Z2']))[0]
-
-    # Combine the index arrays
-    lidar_valid_xyz = np.intersect1d(lidar_z, np.intersect1d(lidar_x, lidar_y))
-
-    return lidar[lidar_valid_xyz]
-
-
 def box3d_cam_to_velo(box3d, tr_velo_to_cam, R0_rect):
     '''
     Transform bounding boxes from center to corner notation

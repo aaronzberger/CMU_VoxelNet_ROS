@@ -1,11 +1,14 @@
 import rospy
 from sensor_msgs.msg import PointCloud2
+from geometry_msgs.msg import Pose
 import torch
+from nav_msgs.msg import Odometry
 
 from CMU_VoxelNet_ROS.msg import predictions
 from preprocess import Pre_Process
 from postprocess import Post_Process
 from voxelnet import VoxelNet
+import numpy as np
 
 
 class VoxelNet_Node:
@@ -14,6 +17,8 @@ class VoxelNet_Node:
             '/velodyne_aggregated', PointCloud2, self.aggregated_callback)
         self.pub_predictions = rospy.Publisher(
             '/voxelnet_predictions', predictions, queue_size=1)
+        self.velodyne_odom = rospy.Subscriber(
+            '/aft_mapped_to_init', Odometry, self.velodyne_odom_callback)
 
         self.pre_process = Pre_Process()
         self.post_process = Post_Process()
@@ -27,9 +32,18 @@ class VoxelNet_Node:
         self.net = VoxelNet(self.device).to(self.device)
         self.net.eval()
 
+        # ROS message values are initialized to 0 by default
+        self.velodyne_offset = Odometry()
+
+    def velodyne_odom_callback(self, data):
+        self.velodyne_offset = data
+
     def aggregated_callback(self, data):
+        # Use the offset corresponding to this frame, not future ones
+        this_frame_offset = self.velodyne_offset
+
         voxel_features, voxel_coords, pointcloud = \
-            self.pre_process.pre_process(data.data)
+            self.pre_process.pre_process(data.data, this_frame_offset)
 
         voxel_features = torch.Tensor(voxel_features).to(self.device)
         voxel_coords = torch.Tensor(voxel_coords).to(self.device)
